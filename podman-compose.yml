@@ -1,0 +1,18 @@
+services:
+  wireguard-test:
+    build:
+      context: .
+      dockerfile: Containerfile
+    container_name: wireguard_cc
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./:/app:Z
+    privileged: false  # No need for full privileges
+    network_mode: bridge  # Use bridge networking instead of host
+    ports:
+      - "51820:51820/udp"  # WireGuard port
+    environment:
+      - TZ=UTC
+    security_opt:
+      - label=disable
