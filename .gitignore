@@ -1,0 +1,20 @@
+
+.gradle
+
+local.properties
+
+.idea
+*.iml
+*.aar
+*.apk
+*.swp
+.DS_Store
+
+/build
+/target
+
+# Ignore all .toml files
+*.toml
+
+# But don't ignore init.toml
+!init.toml

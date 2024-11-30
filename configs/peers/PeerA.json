@@ -1,0 +1,5 @@
+{"configs": [{
+  "comments": "",
+  "id": "2024-10-16T17:12:28.049930318",
+  "config": "[Interface]\nAddress = 10.10.10.2/24\nPrivateKey = kFZTjM11jzGen0gm0agjH9MNpVUER9sJHvyxVagGuW0=\n[Peer]\nAllowedIPs = 4381QxFqWokN3KTbb3OAepNycuBb+Rx1G6PxDA2ichM=\nPersistentKeepalive = 25\nPublicKey = null\n"
+}]}

@@ -1,0 +1,5 @@
+server_name = "Wireguard-v2"
+server_subnet = "10.8.16.0/24"
+server_address = "10.8.16.1/24"
+listen_port = "14856"
+endpoint = "172.236.185.187"
