@@ -8,8 +8,9 @@ local.properties
 *.aar
 *.apk
 *.swp
-*.conf
 .DS_Store
 
 /build
 /target
+
+*.conf
