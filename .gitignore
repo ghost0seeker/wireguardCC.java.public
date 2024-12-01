@@ -12,9 +12,3 @@ local.properties
 
 /build
 /target
-
-# Ignore all .toml files
-*.toml
-
-# But don't ignore init.toml
-!init.toml
