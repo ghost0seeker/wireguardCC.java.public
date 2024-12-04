@@ -1,26 +1,15 @@
-FROM docker.io/library/alpine:latest
+FROM docker.io/library/openjdk:17-slim
 
-# Install OpenJDK and required packages
-RUN apk add --no-cache \
-    fish \
-    openjdk17 \
-    #wireguard-tools \
-    #iptables \
-    iproute2 \
-    net-tools \
-    iputils \
-    curl \
-    maven
+RUN apt-get update && apt-get install -y \
+	maven \
+	git \
+	fish \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
+RUN echo /usr/bin/fish | tee -a /etc/shells \
+    && chsh -s /usr/bin/fish
 
-# Copy source code and pom.xml
-COPY src/ src/
-COPY pom.xml ./
+WORKDIR /workbench
 
-# Build the application
-#RUN mvn clean package
-
-# Keep container running for testing
-CMD ["tail", "-f", "/dev/null"]
+CMD ["fish"]
