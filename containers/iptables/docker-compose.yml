@@ -1,0 +1,46 @@
+services:
+  server_container:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: java-project-container:latest
+    container_name: server_container_ip
+    cap_add:
+      - NET_ADMIN
+    networks:
+      test_iptables_network:
+        ipv4_address: 172.0.0.101 # Assign a static IP in the new range
+    volumes:
+      - /home/ghost/Documents/codebase/wireguard_cc.java/containers/app:/workbench # Mount current directory to /workbench
+    working_dir: /workbench # Set the container's working directory
+    #ports:
+    #  - "8080:8080" # Optional: Map host port to container port
+    tty: true
+    stdin_open: true
+
+  peer_container:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: java-project-container:latest
+    container_name: peer_container_ip
+    cap_add:
+      - NET_ADMIN
+    networks:
+      test_iptables_network:
+        ipv4_address: 172.0.0.102 # Assign a static IP in the new range
+    volumes:
+      - /home/ghost/Documents/codebase/wireguard_cc.java/containers/app:/workbench # Mount current directory to /workbench
+    working_dir: /workbench # Set the container's working directory
+    #ports:
+    #  - "8080:8080" # Optional: Map host port to container port
+    tty: true
+    stdin_open: true
+
+networks:
+  test_iptables_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.0.0.0/24
+

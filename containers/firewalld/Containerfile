@@ -1,0 +1,26 @@
+FROM alpine:latest
+
+RUN apk update && apk add --no-cache \
+    openrc \
+    openjdk17 \
+    maven \
+    git \
+    fish \
+    neovim \
+    iproute2 \
+    firewalld \
+    dbus \
+    && rc-update add dbus default \
+    && rc-update add firewalld default
+
+# Enable and configure OpenRC
+RUN openrc && touch /run/openrc/softlevel
+
+# Set working directory
+WORKDIR /workbench
+
+# Copy the Fish entrypoint script
+COPY entrypoint.fish /usr/local/bin/entrypoint.fish
+RUN chmod +x /usr/local/bin/entrypoint.fish
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.fish"]

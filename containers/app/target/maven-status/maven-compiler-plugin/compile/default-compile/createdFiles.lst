@@ -1,0 +1,15 @@
+br/eti/balena/security/ecdh/curve25519/Curve25519KeyPairGenerator.class
+com/wireguard/cc/ServerConfig.class
+br/eti/balena/security/ecdh/curve25519/Curve25519$long10.class
+com/wireguard/cc/WgenKey.class
+com/wireguard/cc/Manager.class
+com/wireguard/cc/Initiator.class
+com/wireguard/cc/PeerConfig.class
+br/eti/balena/security/ecdh/curve25519/Curve25519PublicKey.class
+br/eti/balena/security/ecdh/curve25519/Curve25519KeyAgreement.class
+br/eti/balena/security/ecdh/curve25519/Curve25519Key.class
+br/eti/balena/security/ecdh/curve25519/Curve25519SecretKey.class
+com/wireguard/cc/ConfGenerator.class
+com/wireguard/cc/Configurator.class
+br/eti/balena/security/ecdh/curve25519/Curve25519.class
+br/eti/balena/security/ecdh/curve25519/Curve25519PrivateKey.class

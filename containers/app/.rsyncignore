@@ -1,0 +1,9 @@
+app
+.classpath
+Containerfile
+current_issues.md
+*-compose.yml
+.git
+.gitignore
+sync_app.fish
+.vscode

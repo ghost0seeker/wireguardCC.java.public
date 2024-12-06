@@ -35,7 +35,7 @@ public class Manager {
         this.processBuilder.redirectErrorStream(true);
     }
 
-
+    
     private int executeCommand(String... command) throws IOException, InterruptedException {
         processBuilder.command(command);
         Process process = processBuilder.start();
@@ -49,6 +49,7 @@ public class Manager {
 
         return process.waitFor();
     }
+
 
     private void checkRoot() {
         try {
@@ -64,6 +65,7 @@ public class Manager {
             System.exit(1);
         }
     }
+
 
     private void detectOS() {
         try {
@@ -107,6 +109,7 @@ public class Manager {
         }
     }
 
+
     private void checkWireGuard() {
         try {
             Process process = new ProcessBuilder("which", "wg").start();
@@ -119,6 +122,7 @@ public class Manager {
             System.exit(1);
         }
     }
+
 
     private void installWireguard() {
         try {
@@ -150,6 +154,7 @@ public class Manager {
         }
     }
 
+
 private void detectFirewall() {
     try {
         Process process = new ProcessBuilder("which", "firewall-cmd").start();
@@ -168,6 +173,7 @@ private void detectFirewall() {
         System.exit(1);
     }
 }
+
 
 private void installIptables() {
     try {
@@ -194,6 +200,7 @@ private void installIptables() {
         System.exit(1);
     }
 }
+
 
 private void detectNetworkInterface() {
     try {
@@ -222,27 +229,44 @@ private void detectNetworkInterface() {
     }
 }
 
+
 private void configureFirewall(String interfaceName,  boolean isServer) {
     try {
         if (isFirewalldPresent) {
+
+            
 
             executeCommand("firewall-cmd", "--zone=" + activeZone, "--add-interface=" + interfaceName);
 
             if (isServer) {
 
+                System.out.println("Configuring firewalld...");
                 executeCommand("firewall-cmd", "--zone=" + activeZone, "--add-masquerade");
                 executeCommand("firewall-cmd", "--zone=" + activeZone, "--add-forward");
                 executeCommand("firewall-cmd", "--zone=" + activeZone, "--add-port=" + Initiator.listen_port + "/udp");
 
             }
+
         } else {
             if (isServer) {
+                try {
+                    flushIptables();
+                    System.out.println("Adding new iptables rules...");
 
-                executeCommand("iptables", "-A", "INPUT", "-p", "udp", "--dport", Initiator.listen_port, "-j", "ACCEPT");
-                executeCommand("iptables", "-A", "FORWARD", "-i", interfaceName, "-j", "ACCEPT");
-                executeCommand("iptables", "-A", "FORWARD", "-o", interfaceName, "-j", "ACCEPT");
-                executeCommand("iptables", "-t", "nat", "-A", "POSTROUTING", "-o", physicalInterface, "-j", "MASQUERADE");
+                    System.out.println("Adding Handshake UDP port rule...");
+                    executeCommand("iptables", "-A", "INPUT", "-p", "udp", "--dport", Initiator.listen_port, "-j", "ACCEPT");
 
+                    System.out.println("Adding FORWARD rules...");
+                    executeCommand("iptables", "-A", "FORWARD", "-i", interfaceName, "-j", "ACCEPT");
+                    executeCommand("iptables", "-A", "FORWARD", "-o", interfaceName, "-j", "ACCEPT");
+
+                    System.out.println("Adding NAT masquerade rule...");
+                    executeCommand("iptables", "-t", "nat", "-A", "POSTROUTING", "-o", physicalInterface, "-j", "MASQUERADE");
+                   
+                    System.out.println("All iptables rules added successfully");
+                } catch (Exception e) {
+                    System.err.println("Error configuring iptables: " + e.getMessage());
+                }
             }
         }
     } catch (Exception e) {
@@ -251,31 +275,43 @@ private void configureFirewall(String interfaceName,  boolean isServer) {
     }
 }
 
+
 private void cleanupFirewall(String interfaceName, boolean isServer) {
     try {
         if (isFirewalldPresent) {
-            
-            executeCommand("firewall-cmd", "--zone=" + activeZone, "--remove-interface=" + interfaceName);
-            
+            //executeCommand("sudo", "firewall-cmd", "--zone=" + activeZone, "--remove-interface=" + interfaceName);
             if (isServer) {
-
-                executeCommand("firewall-cmd", "--zone=" + activeZone, "--remove-masquerade");
-                executeCommand("firewall-cmd", "--zone=" + activeZone, "--remove-forward");
-
+                System.out.println("Removing firewalld rules");
+                executeCommand("firewall-cmd", "--reload");
             }
         } else {
             if (isServer) {
-
-                executeCommand("iptables", "-D", "FORWARD", "-i", interfaceName, "-j", "ACCEPT");
-                executeCommand("iptables", "-D", "FORWARD", "-o", interfaceName, "-j", "ACCEPT");
-                executeCommand("iptables", "-t", "nat", "-D", "POSTROUTING", "-o", physicalInterface, "-j", "MASQUERADE");
-
+                flushIptables();
             }
         }
     } catch (Exception e) {
         System.err.println("Error cleaning up firewall: " + e.getMessage());
     }
 }
+
+
+private void flushIptables() throws IOException, InterruptedException {
+    System.out.println("Flushing iptables rules....");
+    executeCommand("iptables", "-F");
+    executeCommand("iptables", "-X");
+    executeCommand("iptables", "-t", "nat", "-F");
+    executeCommand("iptables", "-t", "nat", "-X");
+    System.out.println("iptables rules flushed successfully");
+
+    // Set default policies to ACCEPT
+    System.out.println("Setting default policies...");
+    executeCommand("iptables", "-P", "INPUT", "ACCEPT");
+    executeCommand("iptables", "-P", "FORWARD", "ACCEPT");
+    executeCommand("iptables", "-P", "OUTPUT", "ACCEPT");
+    System.out.println("Default policies set to ACCEPT");
+
+}
+
 
 private void saveAndCopyConfig(String fileName) {
     try {
