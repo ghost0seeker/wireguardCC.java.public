@@ -3,19 +3,13 @@ package com.wireguard.cc.helper;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Scanner;
-
-import org.tomlj.TomlParseResult;
 
 import com.wireguard.cc.Initiator;
-import com.wireguard.cc.Manager;
 
-public final class HandleFirewall {
+public class HandleFirewall {
 
     public static boolean isFirewalldPresent;
-    private static String packageManager;
+    public static String packageManager;
     private static String physicalInterface;
     private static String activeZone;
     private ProcessBuilder processBuilder;
@@ -53,43 +47,70 @@ public final class HandleFirewall {
             Process process = new ProcessBuilder("cat", "/etc/os-release").start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
+            boolean packageManagerFound = false;
+
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("ID=")) {
-                    String id  = line.substring(3).replace("\"", "");
+                    System.out.println("Found ID line: [" + line + "]"); // Debug line
+                    String id  = line.substring(3)
+                                        .trim()
+                                        .replace("\"", "")
+                                        .toLowerCase();
+                    System.out.println("Processed OS ID: [" + id + "]");
                     switch(id) {
                         case "ubuntu":
                         case "debian":
                             // osType = "debian";
                             packageManager = "apt";
+                            packageManagerFound = true;
+                            System.out.println("OS Type: Debian-based. Using " + packageManager + " package manager");
                             break;
                         case "fedora":
                         case "rhel":
                         case "centos":
                             // osType = "redhat";
                             packageManager = "dnf";
+                            packageManagerFound = true;
+                            System.out.println("OS Type: Red Hat-based. Using  " + packageManager + " package manager");
                             break;
                         case "arch":
                         case "endeavouros":
                             // osType = "arch";
                             packageManager = "pacman";
+                            packageManagerFound = true;
+                            System.out.println("OS Type: Arch-based. Using " + packageManager + " package manager");
                             break;
                         case "alpine":
                             // osType = "alpine";
                             packageManager = "apk";
+                            packageManagerFound = true;
+                            System.out.println("OS Type: Alpine. Using " + packageManager + " package manager");
                             break;
-                        default:
-                        System.out.println("Unsupported OS: "+ id);
-                        System.exit(1);
+                        // default:
+                        // System.out.println("Unsupported OS: "+ id);
+                        // System.exit(1);
                     }
+                    if (packageManagerFound) {
                     break;
+                    }
                 }
             }
+
+            if (!packageManagerFound) {
+                throw new RuntimeException("Unable to detect package manager from /etc/os-release");
+            }
+            
+            process.waitFor();
+            if (process.exitValue() != 0) {
+                throw new RuntimeException("Failed to read /etc/os-release");
+            }
+            
         } catch (Exception e) {
-            System.err.println("Error detecting OS: " + e.getMessage());
+            System.err.println("Critical error detecting OS: " + e.getMessage());
+            e.printStackTrace();
             System.exit(1);
         }
     }
-
     
     private static void detectNetworkInterface() {
         try {
@@ -210,11 +231,11 @@ public final class HandleFirewall {
         } catch (Exception e) {
             System.err.println("Error configuring firewall: " + e.getMessage());
             //cleanupAndExit();
-            cleanupFirewall(interfaceName, isServer);
+            cleanupFirewall(isServer);
         }
     }
 
-    private void cleanupFirewall(String interfaceName, boolean isServer) {
+    private void cleanupFirewall(boolean isServer) {
         try {
             if (isFirewalldPresent) {
                 //executeCommand("sudo", "firewall-cmd", "--zone=" + activeZone, "--remove-interface=" + interfaceName);

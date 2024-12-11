@@ -5,6 +5,7 @@
 /home/ghost/Documents/codebase/wireguard_cc.java/src/main/java/com/wireguard/cc/Initiator.java
 /home/ghost/Documents/codebase/wireguard_cc.java/src/main/java/com/wireguard/cc/PeerConfig.java
 /home/ghost/Documents/codebase/wireguard_cc.java/src/main/java/br/eti/balena/security/ecdh/curve25519/Curve25519KeyAgreement.java
+/home/ghost/Documents/codebase/wireguard_cc.java/src/main/java/com/wireguard/cc/helper/HandleFirewall.java
 /home/ghost/Documents/codebase/wireguard_cc.java/src/main/java/com/wireguard/cc/WgenKey.java
 /home/ghost/Documents/codebase/wireguard_cc.java/src/main/java/com/wireguard/cc/Manager.java
 /home/ghost/Documents/codebase/wireguard_cc.java/src/main/java/br/eti/balena/security/ecdh/curve25519/Curve25519PublicKey.java

@@ -6,6 +6,7 @@ com/wireguard/cc/Manager.class
 com/wireguard/cc/Initiator.class
 com/wireguard/cc/PeerConfig.class
 br/eti/balena/security/ecdh/curve25519/Curve25519PublicKey.class
+com/wireguard/cc/helper/HandleFirewall.class
 br/eti/balena/security/ecdh/curve25519/Curve25519KeyAgreement.class
 br/eti/balena/security/ecdh/curve25519/Curve25519Key.class
 br/eti/balena/security/ecdh/curve25519/Curve25519SecretKey.class

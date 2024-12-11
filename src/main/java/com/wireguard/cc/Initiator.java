@@ -14,6 +14,7 @@ public class Initiator {
     public static String endPoint;
 
     static {
+        System.out.println("Initating init toml file...");
         loadConfig("init.toml");
     }
 
@@ -30,17 +31,19 @@ public class Initiator {
 
         } catch (Exception e) {
             e.printStackTrace();
+            System.out.println("Initaitor Error: Cannot load init toml");
+
         }
     }
 
-    public static void main(String[] args) {
+    // public static void main(String[] args) {
 
-        loadConfig("init.toml");
+    //     loadConfig("init.toml");
 
-        System.out.println("Server Name: " + Initiator.server_name);
-        System.out.println("Server Subnet: " + Initiator.server_subnet);
-        System.out.println("Server Address: " + Initiator.server_address);
-        System.out.println("Listening Port: " + Initiator.listen_port);
+    //     System.out.println("Server Name: " + Initiator.server_name);
+    //     System.out.println("Server Subnet: " + Initiator.server_subnet);
+    //     System.out.println("Server Address: " + Initiator.server_address);
+    //     System.out.println("Listening Port: " + Initiator.listen_port);
 
-    }
+    // }
 }

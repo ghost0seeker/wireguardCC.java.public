@@ -13,16 +13,17 @@ import com.wireguard.cc.helper.HandleFirewall;
 public class Manager {
 
     // private String osType;
-    private String packageManager;
     private TomlParseResult tomlData;
     private String interfaceName;
     private Path configPath;
+    private HandleFirewall helperF;
 
     private ProcessBuilder processBuilder;
     
     public Manager(TomlParseResult tomlData) {
 
         checkRoot();
+        this.helperF = new HandleFirewall();
 
         this.tomlData = tomlData;
         this.processBuilder = new ProcessBuilder();
@@ -65,7 +66,7 @@ public class Manager {
             Process process = new ProcessBuilder("which", "wg").start();
             if (process.waitFor() != 0) {
                 System.out.println("Wireguard not found. Installing...");
-                installWireguard(packageManager);
+                installWireguard();
             }
         } catch (Exception e) {
             System.err.println("Error checking WireGuard: " + e.getMessage());
@@ -74,8 +75,16 @@ public class Manager {
     }
 
 
-    private void installWireguard(String packageManager) {
+    private void installWireguard() {
         try {
+
+            if (HandleFirewall.packageManager == null) {
+                System.err.println("Error: Package manager not detected");
+                System.exit(1);
+            }
+
+            String packageManager = HandleFirewall.packageManager;
+
             switch (packageManager) {
                 case "apt":
                     executeCommand("apt", "update");
@@ -93,8 +102,10 @@ public class Manager {
                 default:
                     throw new RuntimeException("Unsupported package manager");
             }
+            System.out.println("WireGuard installation completed");
         } catch (Exception e) {
             System.err.println("Error installing WireGuard: " + e.getMessage());
+            e.printStackTrace();
             System.exit(1);
         }
     }
@@ -118,7 +129,7 @@ public class Manager {
             
         } catch (Exception e) {
             System.err.println("Error handling configuration file: " + e.getMessage());
-            cleanupAndExit();
+            //cleanupAndExit();
         }
     }
 
@@ -131,8 +142,6 @@ public class Manager {
         System.out.print("Enter choice: ");
         
         String choice = scanner.nextLine().toUpperCase();
-
-        boolean isServer = choice.equals("S");
         
         if (!choice.equals("S") && !choice.equals("P")) {
             System.out.println("Invalid choice");
@@ -140,7 +149,9 @@ public class Manager {
         } else {
             switch (choice) {
                 case "S":
+                    boolean isServer = choice.equals("S");
                     System.out.println("Starting wireguard peer as server...");
+
                     // Generate configuration using ConfGenerator
                     ConfGenerator confGen = new ConfGenerator(tomlData);
                     if (!confGen.generateServerFile(scanner)) {
@@ -150,21 +161,20 @@ public class Manager {
 
                     this.configPath = confGen.getConfigPath(); // Default interface name
                     String configFileName = configPath.getFileName().toString();
-                    System.out.println("Using conf file"+configFileName);
+                    //System.out.println("Using conf file: "+configFileName);
                     this.interfaceName = configPath.getFileName().toString();
 
                     if (interfaceName.endsWith(".conf")) {
                         this.interfaceName = interfaceName.substring(0, interfaceName.length() - 5);
-                        System.out.println("Using conf file"+interfaceName);
+                        System.out.println("Using conf file: "+interfaceName);
                     }
 
                     try {
 
                         System.out.println("Configuring firewall for server");
-                        HandleFirewall handleFirewall = new HandleFirewall();
                         System.out.println("Detecting firewall backend...");
-                        handleFirewall.detectFirewall();
-                        handleFirewall.configureFirewall(interfaceName, isServer);
+                        helperF.detectFirewall();
+                        helperF.configureFirewall(interfaceName, isServer);
             
                         System.out.print("Setting Wireguard...");
                         checkWireGuard();
@@ -183,36 +193,65 @@ public class Manager {
                         e.printStackTrace();
                     }
                 
-                    case "P":
-                        System.out.println("Starting wireguard connection as peer");
+                case "P":
+                    System.out.println("Starting wireguard connection as peer");
 
+                    ConfGenerator peerconfGen = new ConfGenerator(tomlData);
+                    if (!peerconfGen.generatePeerFile(scanner)) {
+                        System.out.println("Configuration generation failed");
+                        return;
+                    }
 
+                    this.configPath = peerconfGen.getConfigPath();
+                    String peerconfigFileName = configPath.getFileName().toString();
+                    //System.out.println("Using conf file"+peerconfigFileName);
+                    this.interfaceName = configPath.getFileName().toString();
+
+                    if (interfaceName.endsWith(".conf")) {
+                        this.interfaceName = interfaceName.substring(0, interfaceName.length() - 5);
+                        System.out.println("Using conf file: "+interfaceName);
+                    }
+
+                    try {
+                        System.out.print("Setting Wireguard...");
+                        checkWireGuard();
+                        System.out.println("Copying configuration file to /etc/wiregaurd");
+                        saveAndCopyConfig(peerconfigFileName);
+
+                        System.out.println("Starting wireguard connection");
+                        int exitCode = executeCommand("wg-quick", "up", interfaceName);
+            
+                        if (exitCode != 0) {
+                            throw new IOException("Failed to start WireGuard interface");
+                            }
+                        System.out.println("Connection Started");
+                    } catch (Exception e) {
+                        System.err.println("Failed to establish WireGuard connection: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+            }
         }
-
-
-
-
-
- 
+    }
             
 
-    private void cleanupAndExit() {
-        try {
-            if (configPath != null) {
-                // Process process = new ProcessBuilder("wg-quick", "down", configPath.toString()).start();
-                // process.waitFor();
-                executeCommand("wg-quick", "down", interfaceName);
-                cleanupFirewall(interfaceName, true);
+    // private void cleanupAndExit() {
+    //     try {
+    //         if (configPath != null) {
+    //             // Process process = new ProcessBuilder("wg-quick", "down", configPath.toString()).start();
+    //             // process.waitFor();
+    //             executeCommand("wg-quick", "down", interfaceName);
+    //             HandleFirewall handleFirewall = new HandleFirewall();
+    //             handleFirewall.cleanupFirewall(isServer);
                 
-                // Clear screen one final time
-                System.out.print("\033[H\033[2J");
-                System.out.flush();
-                System.out.println("WireGuard connection terminated.");
-            }
-        } catch (Exception e) {
-            System.err.println("Error during cleanup: " + e.getMessage());
-        }
-        System.exit(0);
-    }
+    //             // Clear screen one final time
+    //             System.out.print("\033[H\033[2J");
+    //             System.out.flush();
+    //             System.out.println("WireGuard connection terminated.");
+    //         }
+    //     } catch (Exception e) {
+    //         System.err.println("Error during cleanup: " + e.getMessage());
+    //     }
+    //     System.exit(0);
+    // }
 
 }
