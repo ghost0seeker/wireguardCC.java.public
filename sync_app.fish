@@ -6,4 +6,6 @@ end
 
 sudo chown -R $USER:$USER containers/app
 
+rm -rf containers/app/*
+
 rsync -a --info=progress2 --exclude-from=.rsyncignore . containers/app

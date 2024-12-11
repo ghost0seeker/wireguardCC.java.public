@@ -98,7 +98,7 @@ public class PeerConfig {
     }
 
     public static int letterToNumber(char letter) {
-        return Character.toUpperCase(letter) - 'A' + 1;
+        return Character.toUpperCase(letter) - 'A' + 2;
     }
 
     private static boolean peerConfGenerator(String peerPrefix, String peerSubnet, String endPoint) {
@@ -113,16 +113,16 @@ public class PeerConfig {
         System.out.println("Peer# Private Key: "+peerKeys.peerPrivateKey64);
         System.out.println("Peer# Public Key: "+peerKeys.peerPublicKey64);
 
-        char peerLetter = peerPrefix.charAt(peerPrefix.length() -1 );
+        char peerLetter = peerPrefix.charAt(peerPrefix.length() - 1 );
         int peerNumber = letterToNumber(peerLetter);
         String position = String.valueOf(peerNumber);
         System.out.println("Configuring Peer: "+peerLetter+" at position: "+peerNumber);
 
         Map<String, String> peerAttributes = Map.of(
-            peerPrefix+"_Address", peerSubnet+"."+position+1+"/24",
+            peerPrefix+"_Address", peerSubnet+"."+position+"/24",
             peerPrefix+"_PrivateKey", peerKeys.peerPrivateKey64,
             peerPrefix+"_PublicKey", peerKeys.peerPublicKey64,
-            peerPrefix+"_Server_Address", peerSubnet +"."+position+1+"/32",
+            peerPrefix+"_Server_Address", peerSubnet +"."+position+"/32",
             peerPrefix+"_AllowedIPS", peerSubnet +".0"+"/24",
             peerPrefix+"_Endpoint", endPoint +":"+ Initiator.listen_port
         );

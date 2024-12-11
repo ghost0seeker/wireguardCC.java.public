@@ -17,6 +17,8 @@ public class Manager {
     private String interfaceName;
     private Path configPath;
     private HandleFirewall helperF;
+    private boolean hasActiveConnection;
+    private String activeInterface;
 
     private ProcessBuilder processBuilder;
     
@@ -28,6 +30,7 @@ public class Manager {
         this.tomlData = tomlData;
         this.processBuilder = new ProcessBuilder();
         this.processBuilder.redirectErrorStream(true);
+
     }
 
     
@@ -56,6 +59,80 @@ public class Manager {
             }
         } catch (Exception e) {
             System.err.println("Error checking root privileges: "+ e.getMessage());
+            System.exit(1);
+        }
+    }
+
+    private void checkActiveConnection(Scanner scanner) {
+        try {
+            Process process = new ProcessBuilder("wg", "show", "interfaces").start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line = reader.readLine();
+
+            if (line != null && !line.trim().isEmpty()) {
+                this.hasActiveConnection = true;
+                this.activeInterface = line.trim();
+                handleActiveConnection(scanner);
+            } else {
+                this.hasActiveConnection = false;
+            }
+        } catch (Exception e) {
+            System.err.println("Error checking active connections: " + e.getMessage());
+            this.hasActiveConnection = false;
+        }
+    }
+
+    private void handleActiveConnection(Scanner scanner) {
+        System.out.println("\nActive WireGuard connection detected on interface: " + activeInterface);
+        System.out.println("\nConnection details:");
+        try {
+            executeCommand("wg", "show", activeInterface);
+        } catch (Exception e) {
+            System.err.println("Error showing connection details: " + e.getMessage());
+        }
+
+        System.out.println("\nChoose action:");
+        System.out.println("1: Reconnect (restart connection)");
+        System.out.println("2: Close connection");
+        System.out.println("3: Keep current connection");
+        System.out.print("Enter choice (1-3): ");
+
+        try {
+            // Scanner scanner = new Scanner(System.in);
+            int choice = Integer.parseInt(scanner.nextLine());
+
+            switch (choice) {
+                case 1:
+                    System.out.println("Reconnecting " + activeInterface + "...");
+                    executeCommand("wg-quick", "down", activeInterface);
+                    executeCommand("wg-quick", "up", activeInterface);
+                    System.out.println("Connection restarted successfully.");
+                    executeCommand("wg", "show", activeInterface);
+                    System.exit(0);
+                    break;
+
+                case 2:
+                    System.out.println("Closing connection...");
+                    executeCommand("wg-quick", "down", activeInterface);
+                    System.out.println("Connection closed successfully.");
+                    System.exit(0);
+                    break;
+
+                case 3:
+                    System.out.println("Keeping current connection.");
+                    executeCommand("wg");
+                    System.exit(0);
+                    break;
+
+                default:
+                    System.out.println("Invalid choice. Keeping current connection.");
+                    System.exit(0);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Keeping current connection.");
+            System.exit(0);
+        } catch (Exception e) {
+            System.err.println("Error managing connection: " + e.getMessage());
             System.exit(1);
         }
     }
@@ -135,111 +212,120 @@ public class Manager {
 
 
     public void run(Scanner scanner) {
-        
-        System.out.println("\nChoose mode:");
-        System.out.println("S: Start as Server");
-        System.out.println("P: Start as Peer");
-        System.out.print("Enter choice: ");
-        
-        String choice = scanner.nextLine().toUpperCase();
-        
-        if (!choice.equals("S") && !choice.equals("P")) {
-            System.out.println("Invalid choice");
-            return;
-        } else {
-            switch (choice) {
-                case "S":
-                    boolean isServer = choice.equals("S");
-                    System.out.println("Starting wireguard peer as server...");
 
-                    // Generate configuration using ConfGenerator
-                    ConfGenerator confGen = new ConfGenerator(tomlData);
-                    if (!confGen.generateServerFile(scanner)) {
-                        System.out.println("Configuration generation failed");
-                        return;
-                    }
+        checkActiveConnection(scanner);
 
-                    this.configPath = confGen.getConfigPath(); // Default interface name
-                    String configFileName = configPath.getFileName().toString();
-                    //System.out.println("Using conf file: "+configFileName);
-                    this.interfaceName = configPath.getFileName().toString();
+        if (!hasActiveConnection) {
 
-                    if (interfaceName.endsWith(".conf")) {
-                        this.interfaceName = interfaceName.substring(0, interfaceName.length() - 5);
-                        System.out.println("Using conf file: "+interfaceName);
-                    }
-
-                    try {
-
-                        System.out.println("Configuring firewall for server");
-                        System.out.println("Detecting firewall backend...");
-                        helperF.detectFirewall();
-                        helperF.detectNetworkInterface();
-                        helperF.configureFirewall(interfaceName, isServer);
+            System.out.println("\nChoose mode:");
+            System.out.println("S: Start as Server");
+            System.out.println("P: Start as Peer");
+            System.out.print("Enter choice: ");
             
-                        System.out.print("Setting Wireguard...");
-                        checkWireGuard();
-                        System.out.println("Copying configuration file to /etc/wiregaurd");
-                        saveAndCopyConfig(configFileName);
-
-                        System.out.println("Starting wireguard connection");
-                        int exitCode = executeCommand("wg-quick", "up", interfaceName);
+            String choice = scanner.nextLine().toUpperCase();
             
-                        if (exitCode != 0) {
-                            throw new IOException("Failed to start WireGuard interface");
-                            }
-                        System.out.println("Connection Started");
-                        executeCommand("wg");
-                        System.exit(0);
-
-                    } catch (Exception e) {
-                        System.err.println("Failed to establish WireGuard connection: " + e.getMessage());
-                        e.printStackTrace();
-                    }
+            if (!choice.equals("S") && !choice.equals("P")) {
+                System.out.println("Invalid choice");
+                return;
+            } else {
+                switch (choice) {
+                    case "S":
+                        boolean isServer = choice.equals("S");
+                        System.out.println("Starting wireguard peer as server...");
+    
+                        // Generate configuration using ConfGenerator
+                        ConfGenerator confGen = new ConfGenerator(tomlData);
+                        if (!confGen.generateServerFile(scanner)) {
+                            System.out.println("Configuration generation failed");
+                            return;
+                        }
+    
+                        this.configPath = confGen.getConfigPath(); // Default interface name
+                        String configFileName = configPath.getFileName().toString();
+                        //System.out.println("Using conf file: "+configFileName);
+                        this.interfaceName = configPath.getFileName().toString();
+    
+                        if (interfaceName == null) {  // Add null check
+                            System.out.println("Error: Interface name is null");
+                            return;
+                        }
+    
+                        if (interfaceName.endsWith(".conf")) {
+                            this.interfaceName = interfaceName.substring(0, interfaceName.length() - 5);
+                            System.out.println("Using conf file: "+interfaceName);
+                        }
+    
+                        try {
+    
+                            System.out.println("Configuring firewall for server");
+                            System.out.println("Detecting firewall backend...");
+                            helperF.detectFirewall();
+                            helperF.detectNetworkInterface();
+                            helperF.configureFirewall(interfaceName, isServer);
                 
-                case "P":
-                    System.out.println("Starting wireguard connection as peer");
-
-                    ConfGenerator peerconfGen = new ConfGenerator(tomlData);
-                    if (!peerconfGen.generatePeerFile(scanner)) {
-                        System.out.println("Configuration generation failed");
-                        return;
-                    }
-
-                    this.configPath = peerconfGen.getConfigPath();
-                    String peerconfigFileName = configPath.getFileName().toString();
-                    //System.out.println("Using conf file"+peerconfigFileName);
-                    this.interfaceName = configPath.getFileName().toString();
-
-                    if (interfaceName.endsWith(".conf")) {
-                        this.interfaceName = interfaceName.substring(0, interfaceName.length() - 5);
-                        System.out.println("Using conf file: "+interfaceName);
-                    }
-
-                    try {
-                        System.out.print("Setting Wireguard...");
-                        checkWireGuard();
-                        System.out.println("Copying configuration file to /etc/wiregaurd");
-                        saveAndCopyConfig(peerconfigFileName);
-
-                        System.out.println("Starting wireguard connection");
-                        int exitCode = executeCommand("wg-quick", "up", interfaceName);
-            
-                        if (exitCode != 0) {
-                            throw new IOException("Failed to start WireGuard interface");
-                            }
-                        System.out.println("Connection Started");
-                        executeCommand("wg");
-                        System.exit(0);
-                        
-                    } catch (Exception e) {
-                        System.err.println("Failed to establish WireGuard connection: " + e.getMessage());
-                        e.printStackTrace();
-                    }
+                            System.out.print("Setting Wireguard...");
+                            checkWireGuard();
+                            System.out.println("Copying configuration file to /etc/wiregaurd");
+                            saveAndCopyConfig(configFileName);
+    
+                            System.out.println("Starting wireguard connection");
+                            int exitCode = executeCommand("wg-quick", "up", interfaceName);
+                
+                            if (exitCode != 0) {
+                                throw new IOException("Failed to start WireGuard interface");
+                                }
+                            System.out.println("Connection Started");
+                            executeCommand("wg");
+                            System.exit(0);
+    
+                        } catch (Exception e) {
+                            System.err.println("Failed to establish WireGuard connection: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                    
+                    case "P":
+                        System.out.println("Starting wireguard connection as peer");
+    
+                        ConfGenerator peerconfGen = new ConfGenerator(tomlData);
+                        if (!peerconfGen.generatePeerFile(scanner)) {
+                            System.out.println("Configuration generation failed");
+                            return;
+                        }
+    
+                        this.configPath = peerconfGen.getConfigPath();
+                        String peerconfigFileName = configPath.getFileName().toString();
+                        //System.out.println("Using conf file"+peerconfigFileName);
+                        this.interfaceName = configPath.getFileName().toString();
+    
+                        if (interfaceName.endsWith(".conf")) {
+                            this.interfaceName = interfaceName.substring(0, interfaceName.length() - 5);
+                            System.out.println("Using conf file: "+interfaceName);
+                        }
+    
+                        try {
+                            System.out.print("Setting Wireguard...");
+                            checkWireGuard();
+                            System.out.println("Copying configuration file to /etc/wiregaurd");
+                            saveAndCopyConfig(peerconfigFileName);
+    
+                            System.out.println("Starting wireguard connection");
+                            int exitCode = executeCommand("wg-quick", "up", interfaceName);
+                
+                            if (exitCode != 0) {
+                                throw new IOException("Failed to start WireGuard interface");
+                                }
+                            System.out.println("Connection Started");
+                            executeCommand("wg");
+                            System.exit(0);
+                            
+                        } catch (Exception e) {
+                            System.err.println("Failed to establish WireGuard connection: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                }
             }
         }
     }
-            
 
     // private void cleanupAndExit() {
     //     try {
