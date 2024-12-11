@@ -1,5 +1,5 @@
-server_name = "Wireguard-03.alpha"
+server_name = "Wireguard-03.alpha.iptables"
 server_subnet = "10.1.1.0/24"
 server_address = "10.1.1.1/24"
 listen_port = "54789"
-endpoint = "172.2.0.101"
+endpoint = "172.0.0.101"

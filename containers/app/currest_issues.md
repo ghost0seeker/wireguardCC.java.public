@@ -1,7 +1,7 @@
 12-11-2024
 
-HandleFirewall is not adding required interfaces and ports in server peer
-After starting a connection the program should quit after running "wg"
+Solved: HandleFirewall is not adding required interfaces and ports in server peer
+Solved: After starting a connection the program should quit after running "wg"
 
 
 

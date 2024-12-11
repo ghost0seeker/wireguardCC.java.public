@@ -165,30 +165,31 @@ public class HandleFirewall {
     }
 
 
-    private static void installIptables() {
+    private void installIptables() {
         try {
-            Process process;
+            
             switch (packageManager) {
                 case "apt":
                     System.out.println("Installing iptables using APT package manager...");
-                    process = new ProcessBuilder("apt", "install", "-y", "iptables").start();
+                    executeCommand("apt", "update");
+                    executeCommand("apt", "install", "-y", "iptables");
                     break;
                 case "dnf":
                     System.out.println("Installing iptables using DNF package manager (Fedora/RHEL)...");
-                    process = new ProcessBuilder("dnf", "install", "-y", "iptables").start();
+                    executeCommand("dnf", "install", "-y", "iptables");
                     break;
                 case "pacman":
                     System.out.println("Installing iptables using Pacman package manager (Arch Linux)...");
-                    process = new ProcessBuilder("pacman", "-Sy", "--noconfirm", "iptables").start();
+                    executeCommand("pacman", "-Sy", "--noconfirm", "iptables");
                     break;
                 case "apk":
                     System.out.println("Installing iptables using APK package manager (Alpine Linux)...");
-                    process = new ProcessBuilder("apk", "add", "iptables").start();
+                    executeCommand("apk", "add", "iptables");
                     break;
                 default:
                     throw new RuntimeException("Unsupported package manager");
             }
-            process.waitFor();
+            
             System.out.println("iptables installation completed successfully.");
         } catch (Exception e) {
             System.err.println("Error installing iptables: " + e.getMessage());
