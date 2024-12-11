@@ -16,12 +16,14 @@ public class Manager {
     private TomlParseResult tomlData;
     private String interfaceName;
     private Path configPath;
+    private HandleFirewall helperF;
 
     private ProcessBuilder processBuilder;
     
     public Manager(TomlParseResult tomlData) {
 
         checkRoot();
+        this.helperF = new HandleFirewall();
 
         this.tomlData = tomlData;
         this.processBuilder = new ProcessBuilder();
@@ -82,6 +84,7 @@ public class Manager {
             }
 
             String packageManager = HandleFirewall.packageManager;
+
             switch (packageManager) {
                 case "apt":
                     executeCommand("apt", "update");
@@ -148,6 +151,7 @@ public class Manager {
                 case "S":
                     boolean isServer = choice.equals("S");
                     System.out.println("Starting wireguard peer as server...");
+
                     // Generate configuration using ConfGenerator
                     ConfGenerator confGen = new ConfGenerator(tomlData);
                     if (!confGen.generateServerFile(scanner)) {
@@ -157,21 +161,21 @@ public class Manager {
 
                     this.configPath = confGen.getConfigPath(); // Default interface name
                     String configFileName = configPath.getFileName().toString();
-                    System.out.println("Using conf file"+configFileName);
+                    //System.out.println("Using conf file: "+configFileName);
                     this.interfaceName = configPath.getFileName().toString();
 
                     if (interfaceName.endsWith(".conf")) {
                         this.interfaceName = interfaceName.substring(0, interfaceName.length() - 5);
-                        System.out.println("Using conf file"+interfaceName);
+                        System.out.println("Using conf file: "+interfaceName);
                     }
 
                     try {
 
                         System.out.println("Configuring firewall for server");
-                        HandleFirewall handleFirewall = new HandleFirewall();
                         System.out.println("Detecting firewall backend...");
-                        handleFirewall.detectFirewall();
-                        handleFirewall.configureFirewall(interfaceName, isServer);
+                        helperF.detectFirewall();
+                        helperF.detectNetworkInterface();
+                        helperF.configureFirewall(interfaceName, isServer);
             
                         System.out.print("Setting Wireguard...");
                         checkWireGuard();
@@ -185,6 +189,9 @@ public class Manager {
                             throw new IOException("Failed to start WireGuard interface");
                             }
                         System.out.println("Connection Started");
+                        executeCommand("wg");
+                        System.exit(0);
+
                     } catch (Exception e) {
                         System.err.println("Failed to establish WireGuard connection: " + e.getMessage());
                         e.printStackTrace();
@@ -201,12 +208,12 @@ public class Manager {
 
                     this.configPath = peerconfGen.getConfigPath();
                     String peerconfigFileName = configPath.getFileName().toString();
-                    System.out.println("Using conf file"+peerconfigFileName);
+                    //System.out.println("Using conf file"+peerconfigFileName);
                     this.interfaceName = configPath.getFileName().toString();
 
                     if (interfaceName.endsWith(".conf")) {
                         this.interfaceName = interfaceName.substring(0, interfaceName.length() - 5);
-                        System.out.println("Using conf file"+interfaceName);
+                        System.out.println("Using conf file: "+interfaceName);
                     }
 
                     try {
@@ -222,6 +229,9 @@ public class Manager {
                             throw new IOException("Failed to start WireGuard interface");
                             }
                         System.out.println("Connection Started");
+                        executeCommand("wg");
+                        System.exit(0);
+                        
                     } catch (Exception e) {
                         System.err.println("Failed to establish WireGuard connection: " + e.getMessage());
                         e.printStackTrace();

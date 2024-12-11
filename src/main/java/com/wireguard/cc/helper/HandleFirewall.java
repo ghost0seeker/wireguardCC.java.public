@@ -17,20 +17,21 @@ public class HandleFirewall {
 
     public HandleFirewall() {
 
-        detectOS();
-        detectNetworkInterface();
-        
         this.processBuilder = new ProcessBuilder();
     
         this.processBuilder.redirectErrorStream(true);
+        
+        detectOS();
+
+        detectFirewall();
 
     }
 
 
     private int executeCommand(String... command) throws IOException, InterruptedException {
-        ProcessBuilder processBuilder = new ProcessBuilder();
+        this.processBuilder.command(command);
         processBuilder.redirectErrorStream(true);
-        Process process = processBuilder.start();
+        Process process = this.processBuilder.start();
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
@@ -112,7 +113,7 @@ public class HandleFirewall {
         }
     }
     
-    private static void detectNetworkInterface() {
+    public void detectNetworkInterface() {
         try {
             Process process = new ProcessBuilder("ip", "route", "get", "8.8.8.8").start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -151,7 +152,11 @@ public class HandleFirewall {
                     System.out.println("No firewall backend found...");
                     System.out.println("Installing iptables...");
                     installIptables();
+                } else {
+                    System.out.println("Found firewall: iptables");
                 }
+            } else {
+                System.out.println("Found firewall: firewald");
             }
         } catch (Exception e) {
             System.err.println("Error detecting firewall backend: " + e.getMessage());
@@ -197,6 +202,8 @@ public class HandleFirewall {
             if (isFirewalldPresent) {
 
                 executeCommand("firewall-cmd", "--zone=" + activeZone, "--add-interface=" + interfaceName);
+                executeCommand("firewall-cmd", "--zone=" + activeZone, "--add-interface=" + physicalInterface);
+
 
                 if (isServer) {
 

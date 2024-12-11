@@ -174,6 +174,7 @@ public class Manager {
                         System.out.println("Configuring firewall for server");
                         System.out.println("Detecting firewall backend...");
                         helperF.detectFirewall();
+                        helperF.detectNetworkInterface();
                         helperF.configureFirewall(interfaceName, isServer);
             
                         System.out.print("Setting Wireguard...");
@@ -188,6 +189,9 @@ public class Manager {
                             throw new IOException("Failed to start WireGuard interface");
                             }
                         System.out.println("Connection Started");
+                        executeCommand("wg");
+                        System.exit(0);
+
                     } catch (Exception e) {
                         System.err.println("Failed to establish WireGuard connection: " + e.getMessage());
                         e.printStackTrace();
@@ -225,6 +229,9 @@ public class Manager {
                             throw new IOException("Failed to start WireGuard interface");
                             }
                         System.out.println("Connection Started");
+                        executeCommand("wg");
+                        System.exit(0);
+                        
                     } catch (Exception e) {
                         System.err.println("Failed to establish WireGuard connection: " + e.getMessage());
                         e.printStackTrace();

@@ -5,7 +5,7 @@
 
     <groupId>com.wireguard</groupId>
     <artifactId>wireguardcc</artifactId>
-    <version>v2</version>
+    <version>v3.alpha</version>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
