@@ -12,6 +12,11 @@ import java.util.regex.Pattern;
 import org.tomlj.Toml;
 import org.tomlj.TomlParseResult;
 
+import com.wireguard.cc.helper.Initiator;
+import com.wireguard.cc.helper.ServerConfig;
+import com.wireguard.cc.helper.PeerConfig;
+import com.wireguard.cc.helper.ConfGenerator;
+
 public class Configurator {
     private TomlParseResult parsedToml;
     private List<String> peerNames;

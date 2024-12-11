@@ -9,6 +9,7 @@ import java.util.Scanner;
 import org.tomlj.TomlParseResult;
 
 import com.wireguard.cc.helper.HandleFirewall;
+import com.wireguard.cc.helper.ConfGenerator;
 
 public class Manager {
 

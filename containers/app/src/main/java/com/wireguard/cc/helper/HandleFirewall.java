@@ -4,8 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import com.wireguard.cc.Initiator;
-
 public class HandleFirewall {
 
     public static boolean isFirewalldPresent;
