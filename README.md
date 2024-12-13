@@ -104,11 +104,12 @@ dns = "10.1.1.3" #(optional)
 ### 1. Server Management
 - Automatically create a server configuration if it doesn't exist.
 - Validate and update existing configurations using `ServerConfig`.
+- Save server configurations in new file named server_name.toml.
 
 ### 2. Peer Management
 - Automatically assign unique IPs to new peers (e.g., PeerA, PeerB).
 - Verify peer keys using Curve25519 encryption.
-- Update the `init.toml` file with new peer configurations.
+- Update the server_name.toml file with new peer configurations.
 
 ### 3. Firewall Integration
 - Detect existing firewall backends (`firewalld` or `iptables`).
