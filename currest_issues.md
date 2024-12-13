@@ -7,8 +7,9 @@ Solved: After starting a connection the program should quit after running "wg"
 
 Before 12-11-2024
 
-Not Reproducable: Monitor mode keeps adding new lines instead of flushing existing
+Removed: Monitor mode keeps adding new lines instead of flushing existing
+Replacement: Manager exists shows wg standard output instead of looping in monitor mode.
 
-Using present eth0 instead of whatever physical interface is available
-    iptables adding double rules for udp listening port
-    quiting doesnt remove udp rule from iptables
+Solved: Using present eth0 instead of whatever physical interface is available
+    Unchecked: iptables adding double rules for udp listening port
+    Unchecked: quiting doesnt remove udp rule from iptables

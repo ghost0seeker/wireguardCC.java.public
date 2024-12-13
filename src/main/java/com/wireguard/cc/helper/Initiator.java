@@ -12,6 +12,7 @@ public class Initiator {
     public static String server_address;
     public static String listen_port;
     public static String endPoint;
+    public static String dnsAddress;
 
     static {
         System.out.println("Initating init toml file...");
@@ -28,6 +29,7 @@ public class Initiator {
             Initiator.server_address = initToml.getString("server_address");
             Initiator.listen_port = initToml.getString("listen_port");
             Initiator.endPoint = initToml.getString("endpoint");
+            Initiator.dnsAddress = initToml.getString("dns");
 
         } catch (Exception e) {
             e.printStackTrace();

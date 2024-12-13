@@ -154,7 +154,12 @@ public class ConfGenerator {
                     // [Interface] section
                     config.append("[Interface]\n");
                     config.append("PrivateKey = ").append(tomlData.getString(selectedPeer + "_PrivateKey")).append("\n");
-                    config.append("Address = ").append(tomlData.getString(selectedPeer + "_Address")).append("\n\n");
+                    config.append("Address = ").append(tomlData.getString(selectedPeer + "_Address")).append("\n");
+                    if (Initiator.dnsAddress != null) {
+                        config.append("DNS = ").append(Initiator.dnsAddress).append("\n\n");
+                    } else {
+                        config.append("\n\n");
+                    }
                     
                     // [Peer] section (Server)
                     config.append("[Peer]\n");
